@@ -1,0 +1,373 @@
+\documentclass[10pt, letterpaper]{article}
+\usepackage{xcolor}
+\definecolor{bleunuit}{RGB}{25, 25, 112} % ou une autre teinte de bleu nuit
+
+\usepackage{titlesec}
+\titleformat{\section}
+  {\color{bleunuit}\normalfont\Large\bfseries}
+  {\thesection}{1em}{}
+
+\usepackage[most]{tcolorbox}
+
+% Packages:
+\usepackage[
+    ignoreheadfoot, % set margins without considering header and footer
+    top=2 cm, % seperation between body and page edge from the top
+    bottom=1.9 cm, % seperation between body and page edge from the bottom
+    left=2 cm, % seperation between body and page edge from the left
+    right=2 cm, % seperation between body and page edge from the right
+    footskip=1.0 cm, % seperation between body and footer
+    % showframe % for debugging 
+]{geometry} % for adjusting page geometry
+\usepackage{titlesec} % for customizing section titles
+\usepackage{tabularx} % for making tables with fixed width columns
+\usepackage{array} % tabularx requires this
+\usepackage[dvipsnames]{xcolor} % for coloring text
+\definecolor{primaryColor}{RGB}{0, 79, 144} % define primary color
+\usepackage{enumitem} % for customizing lists
+\usepackage{fontawesome5} % for using icons
+\usepackage{amsmath} % for math
+\usepackage[
+    pdftitle={CV Yannick G},
+    pdfauthor={Yannick Garnier},
+    pdfcreator={LaTeX with RenderCV},
+    colorlinks=true,
+    urlcolor=primaryColor
+]{hyperref} % for links, metadata and bookmarks
+\usepackage[pscoord]{eso-pic} % for floating text on the page
+\usepackage{calc} % for calculating lengths
+\usepackage{bookmark} % for bookmarks
+\usepackage{lastpage} % for getting the total number of pages
+\usepackage{changepage} % for one column entries (adjustwidth environment)
+\usepackage{paracol} % for two and three column entries
+\usepackage{ifthen} % for conditional statements
+\usepackage{needspace} % for avoiding page brake right after the section title
+\usepackage{iftex} % check if engine is pdflatex, xetex or luatex
+
+% Ensure that generate pdf is machine readable/ATS parsable:
+\ifPDFTeX
+    \input{glyphtounicode}
+    \pdfgentounicode=1
+    % \usepackage[T1]{fontenc} % this breaks sb2nov
+    \usepackage[utf8]{inputenc}
+    \usepackage{lmodern}
+\fi
+
+
+
+% Some settings:
+\AtBeginEnvironment{adjustwidth}{\partopsep0pt} % remove space before adjustwidth environment
+\pagestyle{empty} % no header or footer
+\setcounter{secnumdepth}{0} % no section numbering
+\setlength{\parindent}{0pt} % no indentation
+\setlength{\topskip}{0pt} % no top skip
+\setlength{\columnsep}{0cm} % set column seperation
+\makeatletter
+\let\ps@customFooterStyle\ps@plain % Copy the plain style to customFooterStyle
+\patchcmd{\ps@customFooterStyle}{\thepage}{
+    \color{gray}\textit{}
+}{}{} % replace number by desired string
+\makeatother
+\pagestyle{customFooterStyle}
+
+\titleformat{\section}{\needspace{4\baselineskip}\color{bleunuit}\bfseries\large}{}{0pt}{}[\vspace{1pt}\titlerule]
+
+
+\titlespacing{\section}{
+    % left space:
+    -1pt
+}{
+    % top space:
+    0.3 cm
+}{
+    % bottom space:
+    0.2 cm
+} % section title spacing
+
+\renewcommand\labelitemi{$\circ$} % custom bullet points
+\newenvironment{highlights}{
+    \begin{itemize}[
+        topsep=0.10 cm,
+        parsep=0.10 cm,
+        partopsep=0pt,
+        itemsep=0pt,
+        leftmargin=0.4 cm + 10pt
+    ]
+}{
+    \end{itemize}
+} % new environment for highlights
+
+\newenvironment{highlightsforbulletentries}{
+    \begin{itemize}[
+        topsep=0.10 cm,
+        parsep=0.10 cm,
+        partopsep=0pt,
+        itemsep=0pt,
+        leftmargin=10pt
+    ]
+}{
+    \end{itemize}
+} % new environment for highlights for bullet entries
+
+
+\newenvironment{onecolentry}{
+    \begin{adjustwidth}{
+        0.2 cm + 0.00001 cm
+    }{
+        0.2 cm + 0.00001 cm
+    }
+}{
+    \end{adjustwidth}
+} % new environment for one column entries
+
+\newenvironment{twocolentry}[2][]{
+    \onecolentry
+    \def\secondColumn{#2}
+    \setcolumnwidth{\fill, 4.5 cm}
+    \begin{paracol}{2}
+}{
+    \switchcolumn \raggedleft \secondColumn
+    \end{paracol}
+    \endonecolentry
+} % new environment for two column entries
+
+\newenvironment{header}{
+    \setlength{\topsep}{0pt}\par\kern\topsep\centering\linespread{1.5}
+}{
+    \par\kern\topsep
+} % new environment for the header
+
+\newcommand{\placelastupdatedtext}{% \placetextbox{<horizontal pos>}{<vertical pos>}{<stuff>}
+  \AddToShipoutPictureFG*{% Add <stuff> to current page foreground
+    \put(
+        \LenToUnit{\paperwidth-2 cm-0.2 cm+0.05cm},
+        \LenToUnit{\paperheight-1.0 cm}
+    ){\vtop{{\null}\makebox[0pt][c]{
+        \small\color{gray}\textit{}\hspace{\widthof{}}
+    }}}%
+  }%
+}%
+
+% save the original href command in a new command:
+\let\hrefWithoutArrow\href
+
+% new command for external links:
+\renewcommand{\href}[2]{\hrefWithoutArrow{#1}{\ifthenelse{\equal{#2}{}}{ }{#2 }\raisebox{.15ex}{\footnotesize \faExternalLink*}}}
+
+\vspace{-300pt}
+\begin{document}
+    \newcommand{\AND}{\unskip
+        \cleaders\copy\ANDbox\hskip\wd\ANDbox
+        \ignorespaces
+    }
+    \newsavebox\ANDbox
+    \sbox\ANDbox{}
+
+    \placelastupdatedtext
+    \begin{header}
+    \vspace*{-1.45cm}
+        \textbf{\fontsize{24 pt}{24 pt}\selectfont\textcolor{bleunuit} {Yannick GARNIER}}
+
+        \vspace{0.3 cm}
+
+        \normalsize
+        \mbox{{\color{black}\footnotesize\faMapMarker*}\hspace*{0.13cm}75000 Paris, France}%
+        \kern 0.25 cm%
+        \AND%
+        \kern 0.25 cm%
+        \mbox{\hrefWithoutArrow{mailto:yannick.garnier@gmail.com}{\color{black}{\footnotesize\faEnvelope[regular]}\hspace*{0.13cm}yannick.garnier@gmail.com}}%
+        \kern 0.25 cm%
+        \AND%
+        \kern 0.25 cm%
+        \mbox{\href{https://www.linkedin.com/}{\color{black}{\footnotesize\faLinkedin}\hspace*{0.13cm}Linkedin}}%
+        \kern 0.25 cm%
+        \AND%
+        \kern 0.25 cm%
+        \mbox{\hrefWithoutArrow{tel:+33601020304}{\color{black}{\footnotesize\faPhone*}\hspace*{0.13cm}+33 6 01 02 03 04}}%
+        \kern 0.25 cm%
+        \AND%
+        \kern 0.25 cm%
+        
+        \kern 0.25 cm%
+     
+        \kern 0.25 cm%
+        
+        \kern 0.25 cm% 
+    \end{header}
+
+
+
+\vspace{-0.6cm}
+\begin{tcolorbox}[
+    colback=gray!5,
+    colframe=bleunuit,
+    coltitle=black,
+    boxrule=0.4pt,
+    arc=2mm,
+    left=4pt,
+    right=4pt,
+    top=2pt,
+    bottom=2pt,
+    fontupper=\small,
+    width=\linewidth,
+    sharp corners=south
+]
+\justifying
+Étudiant en 3\textsuperscript{ème} année à l’ENSIMAG, je recherche un stage de fin d’études (6 mois) à partir de février 2026. Curieux, analytique et à l’aise dans le travail en équipe, je souhaite contribuer à des projets innovants en informatique ou mathématiques appliquées.
+\end{tcolorbox}
+\vspace{-0.1cm}
+
+
+\section{Formations}
+\begin{twocolentry}{\textit{Depuis 2023}}
+    \textbf{ENSIMAG – Grenoble INP} \\
+    \textit{Filière MMIS et Master of Artificial Intelligence}
+\end{twocolentry}
+
+\vspace{0.10cm}
+\begin{onecolentry}
+    \begin{highlights}
+        \item Formation axée sur la modélisation mathématique, l'image, la simulation et l’intelligence artificielle.
+    \end{highlights}
+\end{onecolentry}
+
+\vspace{0.3cm}
+\begin{twocolentry}{\textit{Avril – Août 2025}}
+    \textbf{Technische Universität München (TUM)} – Allemagne \\
+    \textit{Échange académique}
+\end{twocolentry}
+
+\vspace{0.10cm}
+\begin{onecolentry}
+    \begin{highlights}
+        \item Cours en fondements mathématiques pour le Machine Learning, analyse de données et Deep Learning.
+    \end{highlights}
+\end{onecolentry}
+
+\vspace{0.3cm}
+\begin{twocolentry}{\textit{2021 – 2023}}
+    \textbf{Cycle Préparatoire Polytechnique} – INP Grenoble \\
+    \textit{Cours en sciences fondamentales et ingénierie}
+\end{twocolentry}
+
+
+\section{Expériences professionnelles}
+
+\begin{twocolentry}{\textit{Grenoble, France} \\
+\textit{Janvier – Avril 2025}}
+    \textbf{Stagiaire assistant ingénieur} \\
+    \textit{STMicroelectronics}
+\end{twocolentry}
+
+\vspace{0.10cm}
+\begin{onecolentry}
+    \begin{highlights}
+        \item Développement en C++ d’un simulateur analogique intégré dans un simulateur digital “event-driven”.
+        \item Conception et implémentation complètes à partir d’un article IEEE (2019). Projet en cours de valorisation scientifique par publication.
+    \end{highlights}
+\end{onecolentry}
+
+\vspace{0.3cm}
+\begin{twocolentry}{\textit{Montreux, Suisse} \\
+\textit{Janvier 2025}}
+    \textbf{Développeur logiciel} \\
+    \textit{Clinique de gastro-entérologie}
+\end{twocolentry}
+
+\vspace{0.10cm}
+\begin{onecolentry}
+    \begin{highlights}
+        \item Développement en C d’un logiciel automatisant l’intégration d’images dans des rapports médicaux PDF.
+        \item Logiciel actuellement utilisé en production.
+    \end{highlights}
+\end{onecolentry}
+
+\vspace{0.3cm}
+\begin{twocolentry}{\textit{Grenoble, France} \\
+\textit{Juin 2024}}
+    \textbf{Technicien support logiciel} \\
+    \textit{Allcom}
+\end{twocolentry}
+
+\vspace{0.10cm}
+\begin{onecolentry}
+    \begin{highlights}
+        \item Migration vers le logiciel de facturation Dolibarr et transfert des données clients.
+        \item Modification des documents via la librairie TCPDF (PHP).
+    \end{highlights}
+\end{onecolentry}
+
+
+
+\section{Projets académiques}
+
+
+\begin{twocolentry}{\textit{Décembre 2024}}
+    \textbf{Développement d’un compilateur}
+\end{twocolentry}
+
+\vspace{0.10cm}
+\begin{onecolentry}
+    \begin{highlights}
+        \item Création d’un compilateur pour un sous-langage de Java, en équipe de 5.
+    \end{highlights}
+\end{onecolentry}
+
+
+\vspace{0.3cm}
+\begin{twocolentry}{\textit{Mai – Juin 2024}}
+    \textbf{Implémentation d’un encodeur JPEG}
+\end{twocolentry}
+
+\vspace{0.10cm}
+\begin{onecolentry}
+    \begin{highlights}
+        \item Implémentation en C d’un encodeur JPEG selon les spécifications du standard, en équipe de 3.
+    \end{highlights}
+\end{onecolentry}
+
+
+
+\section{Compétences techniques}
+
+\begin{onecolentry}
+    \textbf{Langages :} Python, C, C++, Java
+\end{onecolentry}
+
+\vspace{0.2 cm}
+
+\begin{onecolentry}
+    \textbf{Machine Learning :} PyTorch, Pandas
+\end{onecolentry}
+
+\vspace{0.2 cm}
+
+\begin{onecolentry}
+    \textbf{Bases de données :} Notions de SGBD et SQL
+\end{onecolentry}
+
+\vspace{0.2 cm}
+
+\begin{onecolentry}
+    \textbf{Outils :} Git, Linux, WordPress, TCPDF (PHP)
+\end{onecolentry}
+
+\section{Langues et centres d’intérêt}
+
+\begin{onecolentry}
+    \textbf{Langues :} Français (natif), Anglais (B2 – TOEIC), Allemand (B1)
+\end{onecolentry}
+
+\vspace{0.2 cm}
+
+\begin{onecolentry}
+    \textbf{Centres d’intérêt :} Musculation, Football, VTT, Randonnée, Machine Learning
+\end{onecolentry}
+
+% \vspace{0.2 cm}
+
+% \begin{onecolentry}
+%     \textbf{Soft skills :} Travail en équipe, autonomie, esprit d’analyse
+% \end{onecolentry}
+
+\end{document}
