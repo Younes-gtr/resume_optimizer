@@ -1,20 +1,13 @@
 import { useRef, useState } from "react";
+import StartChoice from "./pages/StartChoice";
 import ResumeParser from "./pages/ResumeParser";
 import ResumeEditor from "./pages/ResumeEditor";
 import JobAdaptation from "./pages/JobAdaptation";
 import { generateLatex } from "./services/latexService";
+import { readResumeJsonFile } from "./utils/resumeJson";
 import type { ResumeResponse } from "./types/resume.types";
 
-type Step = "parse" | "edit" | "adapt" | "done";
-
-const EXPECTED_KEYS: (keyof ResumeResponse)[] = [
-  "summary", "education", "experiences", "projects", "skills", "languages", "interests",
-];
-
-function validateResumeJson(data: unknown): data is ResumeResponse {
-  if (typeof data !== "object" || data === null) return false;
-  return EXPECTED_KEYS.every((k) => k in (data as object));
-}
+type Step = "start" | "parse" | "edit" | "adapt" | "done";
 
 function downloadJson(data: ResumeResponse) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -54,19 +47,15 @@ function Done({ resumeData, onRestart }: { resumeData: ResumeResponse; onRestart
     setUploadError(null);
     setLatexLoading(true);
     setLatexError(null);
+    let parsed: ResumeResponse;
     try {
-      const text = await file.text();
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(text);
-      } catch {
-        setUploadError("Fichier JSON invalide.");
-        return;
-      }
-      if (!validateResumeJson(parsed)) {
-        setUploadError("Le JSON ne correspond pas au format attendu.");
-        return;
-      }
+      parsed = await readResumeJsonFile(file);
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Erreur inconnue");
+      setLatexLoading(false);
+      return;
+    }
+    try {
       await generateLatex(parsed);
     } catch (err) {
       setLatexError(err instanceof Error ? err.message : "Erreur inconnue");
@@ -157,7 +146,7 @@ function Done({ resumeData, onRestart }: { resumeData: ResumeResponse; onRestart
 }
 
 export default function App() {
-  const [step, setStep] = useState<Step>("parse");
+  const [step, setStep] = useState<Step>("start");
   const [resumeData, setResumeData] = useState<ResumeResponse | null>(null);
 
   function handleParsed(data: ResumeResponse) {
@@ -179,8 +168,12 @@ export default function App() {
     setStep("done");
   }
 
+  if (step === "start") {
+    return <StartChoice onAnalyze={() => setStep("parse")} onJsonLoaded={handleParsed} />;
+  }
+
   if (step === "parse") {
-    return <ResumeParser onParsed={handleParsed} />;
+    return <ResumeParser onParsed={handleParsed} onBack={() => setStep("start")} />;
   }
 
   if (step === "edit" && resumeData) {
@@ -201,7 +194,7 @@ export default function App() {
     return (
       <Done
         resumeData={resumeData}
-        onRestart={() => { setResumeData(null); setStep("parse"); }}
+        onRestart={() => { setResumeData(null); setStep("start"); }}
       />
     );
   }

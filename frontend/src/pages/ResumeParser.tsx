@@ -4,9 +4,10 @@ import type { ResumeResponse } from "../types/resume.types";
 
 interface Props {
   onParsed: (data: ResumeResponse) => void;
+  onBack: () => void;
 }
 
-export default function ResumeParser({ onParsed }: Props) {
+export default function ResumeParser({ onParsed, onBack }: Props) {
   const [cvText, setCvText] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,9 +39,14 @@ export default function ResumeParser({ onParsed }: Props) {
           rows={16}
           style={{ width: "100%", fontSize: 14, padding: 8, boxSizing: "border-box" }}
         />
-        <button type="submit" disabled={loading || !cvText.trim()} style={{ marginTop: 8 }}>
-          {loading ? "Analyse en cours..." : "Analyser le CV"}
-        </button>
+        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+          <button type="button" onClick={onBack} disabled={loading}>
+            Retour
+          </button>
+          <button type="submit" disabled={loading || !cvText.trim()}>
+            {loading ? "Analyse en cours..." : "Analyser le CV"}
+          </button>
+        </div>
       </form>
       {error && <p style={{ color: "red", marginTop: 16 }}>Erreur : {error}</p>}
     </div>

@@ -125,3 +125,17 @@ Le header du `.tex` généré (nom, email, téléphone, ville, LinkedIn) est rem
 - **Backend** : objet `PersonalInfo` défini dans `latex_service.py` avec ces valeurs par défaut, injecté dans `generate_latex()`
 - **Schéma** `PersonalInfo` dans `resume_schema.py`
 - Sera rendu configurable dans une future feature (upload ou formulaire)
+
+---
+
+## Feature 6 — Écran d'accueil : analyser un CV ou importer un JSON existant ✅
+
+Au démarrage, l'utilisateur choisit entre :
+
+1. **Analyser mon CV** → écran de saisie du CV (Feature 2), avec un bouton "Retour"
+2. **J'ai déjà un JSON complet** → import d'un `cv.json` (issu de 4a) ; l'analyse LLM est sautée et l'utilisateur arrive directement dans l'éditeur
+
+### Frontend
+- **Page `StartChoice.tsx`** : les deux choix + `<input type="file">` conditionnel
+- **Util `utils/resumeJson.ts`** : `validateResumeJson()` et `readResumeJsonFile()`, partagés avec l'écran final (4b)
+- `App.tsx` : nouvelle étape `start` (étape initiale, et cible du bouton "Recommencer")
