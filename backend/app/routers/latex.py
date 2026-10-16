@@ -1,16 +1,10 @@
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import Response
-from pydantic import BaseModel
 
-from app.schemas.resume_schema import PersonalInfo, ResumeResponse
+from app.schemas.latex_schema import LatexRequest
 from app.services import latex_service
 
 router = APIRouter(prefix="/api/v1/latex", tags=["latex"])
-
-
-class LatexRequest(BaseModel):
-    resume: ResumeResponse
-    personal_info: PersonalInfo | None = None
 
 
 @router.post("/generate", status_code=status.HTTP_200_OK)

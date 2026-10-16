@@ -7,58 +7,16 @@ import type {
   Language,
   TaggedItem,
 } from "../types/resume.types";
+import RequiredCheckbox from "../components/RequiredCheckbox";
+import SkillsSection from "../components/SkillsSection";
+import { btnStyle, cardStyle, inputStyle, sectionStyle } from "../components/editorStyles";
 
 interface Props {
   initialData: ResumeResponse;
   onFinalize: (data: ResumeResponse) => void;
 }
 
-const sectionStyle: React.CSSProperties = {
-  marginBottom: 32,
-  borderBottom: "1px solid #e0e0e0",
-  paddingBottom: 24,
-};
-
-const cardStyle: React.CSSProperties = {
-  background: "#f9f9f9",
-  border: "1px solid #ddd",
-  borderRadius: 6,
-  padding: "12px 16px",
-  marginBottom: 10,
-  position: "relative",
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  fontSize: 14,
-  padding: "6px 8px",
-  boxSizing: "border-box",
-  marginBottom: 6,
-  border: "1px solid #ccc",
-  borderRadius: 4,
-};
-
-const btnStyle = (color: string): React.CSSProperties => ({
-  background: color,
-  color: "#fff",
-  border: "none",
-  borderRadius: 4,
-  padding: "4px 10px",
-  cursor: "pointer",
-  fontSize: 13,
-  marginRight: 6,
-});
-
-function RequiredCheckbox({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
-  return (
-    <label style={{ fontSize: 12, color: "#555", display: "inline-flex", alignItems: "center", gap: 4, marginTop: 4 }}>
-      <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      Obligatoire
-    </label>
-  );
-}
-
-// ── Tagged string list (skills, interests) ────────────────────────────────────
+// ── Tagged string list (interests) ────────────────────────────────────────────
 
 function TaggedListSection({
   title,
@@ -236,7 +194,7 @@ function ExperiencesSection({ items, onChange }: { items: Experience[]; onChange
 // ── Projects ──────────────────────────────────────────────────────────────────
 
 function ProjectsSection({ items, onChange }: { items: Project[]; onChange: (items: Project[]) => void }) {
-  const empty: Project = { name: "", description: "", technologies: [], url: null, required: false };
+  const empty: Project = { name: "", description: "", technologies: [], url: null, show_technologies: true, required: false };
 
   function update(index: number, patch: Partial<Project>) {
     const next = [...items];
@@ -280,6 +238,10 @@ function ProjectsSection({ items, onChange }: { items: Project[]; onChange: (ite
             ))}
             <button style={{ ...btnStyle("#555"), marginTop: 4 }} onClick={() => addTech(i)}>+ Ajouter</button>
           </div>
+          <label style={{ fontSize: 13, margin: "8px 0 0 8px", display: "block" }}>
+            <input type="checkbox" checked={proj.show_technologies} onChange={(e) => update(i, { show_technologies: e.target.checked })} style={{ marginRight: 6 }} />
+            Afficher la ligne "Technologies" dans le CV
+          </label>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
             <RequiredCheckbox checked={proj.required} onChange={(v) => update(i, { required: v })} />
             <button style={btnStyle("#e53935")} onClick={() => onChange(items.filter((_, j) => j !== i))}>Supprimer le projet</button>
@@ -336,7 +298,7 @@ export default function ResumeEditor({ initialData, onFinalize }: Props) {
       <EducationSection items={resume.education} onChange={(v) => patch("education", v)} />
       <ExperiencesSection items={resume.experiences} onChange={(v) => patch("experiences", v)} />
       <ProjectsSection items={resume.projects} onChange={(v) => patch("projects", v)} />
-      <TaggedListSection title="Compétences techniques" items={resume.skills} onChange={(v) => patch("skills", v)} />
+      <SkillsSection categories={resume.skills} onChange={(v) => patch("skills", v)} />
       <LanguagesSection items={resume.languages} onChange={(v) => patch("languages", v)} />
       <TaggedListSection title="Centres d'intérêts" items={resume.interests} onChange={(v) => patch("interests", v)} />
 

@@ -28,21 +28,19 @@ export interface Project {
   description: string;
   technologies: string[];
   url: string | null;
+  show_technologies: boolean;
   required: boolean;
+}
+
+export interface SkillCategory {
+  category: string;
+  skills: TaggedItem[];
 }
 
 export interface Language {
   language: string;
   level: string | null;
   required: boolean;
-}
-
-export interface PersonalInfo {
-  full_name: string;
-  email: string;
-  phone: string;
-  location: string;
-  linkedin: string | null;
 }
 
 export interface ResumeRequest {
@@ -59,7 +57,7 @@ export interface ResumeResponse {
   education: Education[];
   experiences: Experience[];
   projects: Project[];
-  skills: TaggedItem[];
+  skills: SkillCategory[];
   languages: Language[];
   interests: TaggedItem[];
 }

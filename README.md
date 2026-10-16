@@ -8,7 +8,8 @@ Turn your CV into a structured, editable format and generate a LaTeX resume tail
 - **Editable review** — correct, add or remove items per section, and mark items as *required* so they are never dropped.
 - **Job adaptation** — paste a job offer; the LLM keeps only the most relevant items. It is instructed to never invent content and to always keep required items.
 - **LaTeX export** — generate a `.tex` resume from a clean template, either from the current session or from a previously saved JSON.
-- **JSON export / import** — save your structured CV and reuse it later without re-parsing.
+- **Separate personal info** — your name and contact details are kept in their own `personal_info.json`, used only for the resume header and never sent to the LLM.
+- **JSON export / import** — save your structured CV and personal info, and reuse them later without re-parsing.
 
 ## How it works
 
@@ -87,7 +88,6 @@ frontend/src/
 
 ## Roadmap
 
-- [ ] Configurable personal info (name, contact, LinkedIn) for the resume header
 - [ ] Agent-based pipeline (e.g. LangGraph): an experience-selection agent followed by a hallucination-check agent that verifies every output item exists in the source CV
 - [ ] Support for other LLM providers and local models
 - [ ] PDF compilation directly from the app

@@ -38,10 +38,16 @@ The JSON must follow this exact structure:
       "description": "string",
       "technologies": ["string"],
       "url": "string or null",
+      "show_technologies": true,
       "required": false
     }
   ],
-  "skills": [{ "value": "string", "required": false }],
+  "skills": [
+    {
+      "category": "string",
+      "skills": [{ "value": "string", "required": false }]
+    }
+  ],
   "languages": [
     {
       "language": "string",
@@ -50,7 +56,10 @@ The JSON must follow this exact structure:
     }
   ],
   "interests": [{ "value": "string", "required": false }]
-}"""
+}
+
+Group skills into meaningful categories written in English (e.g. "Programming Languages", "Machine Learning", "Tools").
+If the CV already groups its skills, keep its categories."""
 
 
 def parse_resume(cv_text: str) -> ResumeResponse:
@@ -82,7 +91,9 @@ STRICT RULES — you must follow all of them without exception:
 5. For "description" arrays within experiences, you may keep only the most relevant bullet points — but only those already present in the input. Never rewrite or combine them.
 6. The "summary" field is the only text you may rewrite, but only to emphasize aspects already present in the input. Do not invent new facts or qualifications.
 7. Preserve the "required" field value on every item exactly as it is in the input.
-8. The output JSON must use the exact same field names and structure as the input."""
+8. The output JSON must use the exact same field names and structure as the input.
+9. "skills" is a list of categories. Inside each category, apply rules 3 and 4 to its skills. Never rename a category or move a skill to another one. Omit a category only if none of its skills are kept.
+10. Preserve the "show_technologies" field value on every project exactly as it is in the input."""
 
 
 def adapt_resume(resume: ResumeResponse, job_offer: str) -> ResumeResponse:

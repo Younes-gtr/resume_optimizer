@@ -1,4 +1,5 @@
-from app.schemas.resume_schema import Education, Experience, Language, PersonalInfo, Project, ResumeResponse, TaggedItem
+from app.schemas.personal_info_schema import PersonalInfo
+from app.schemas.resume_schema import Education, Experience, Language, Project, ResumeResponse, SkillCategory, TaggedItem
 
 _SPECIAL_CHARS = str.maketrans(
     {
@@ -15,9 +16,6 @@ _SPECIAL_CHARS = str.maketrans(
     }
 )
 
-DEFAULT_PERSONAL_INFO = PersonalInfo()
-
-
 def _esc(text: str | None) -> str:
     if not text:
         return ""
@@ -25,17 +23,30 @@ def _esc(text: str | None) -> str:
 
 
 def _date_range(start: str, end: str | None, current: bool = False) -> str:
-    end_str = "Présent" if current or not end else _esc(end)
+    end_str = "Present" if current or not end else _esc(end)
     return f"{_esc(start)} -- {end_str}"
 
 
 def _header_block(info: PersonalInfo) -> str:
-    linkedin_part = ""
+    items: list[str] = []
+    if info.location:
+        items.append(
+            f"\\mbox{{{{\\color{{black}}\\footnotesize\\faMapMarker*}}\\hspace*{{0.13cm}}{_esc(info.location)}}}%"
+        )
+    if info.email:
+        items.append(
+            f"\\mbox{{\\hrefWithoutArrow{{mailto:{_esc(info.email)}}}{{\\color{{black}}{{\\footnotesize\\faEnvelope[regular]}}\\hspace*{{0.13cm}}{_esc(info.email)}}}}}%"
+        )
+    if info.phone:
+        items.append(
+            f"\\mbox{{\\hrefWithoutArrow{{tel:{_esc(info.phone)}}}{{\\color{{black}}{{\\footnotesize\\faPhone*}}\\hspace*{{0.13cm}}{_esc(info.phone)}}}}}%"
+        )
     if info.linkedin:
-        linkedin_part = f"""        \\kern 0.25 cm%
-        \\AND%
-        \\kern 0.25 cm%
-        \\mbox{{\\href{{{_esc(info.linkedin)}}}{{\\color{{black}}{{\\footnotesize\\faLinkedin}}\\hspace*{{0.13cm}}LinkedIn}}}}%"""
+        items.append(
+            f"\\mbox{{\\href{{{_esc(info.linkedin)}}}{{\\color{{black}}{{\\footnotesize\\faLinkedin}}\\hspace*{{0.13cm}}LinkedIn}}}}%"
+        )
+    separator = "\n        \\kern 0.25 cm%\n        \\AND%\n        \\kern 0.25 cm%\n        "
+    contact_line = separator.join(items)
 
     return f"""    \\begin{{header}}
     \\vspace*{{-1.45cm}}
@@ -44,15 +55,7 @@ def _header_block(info: PersonalInfo) -> str:
         \\vspace{{0.3 cm}}
 
         \\normalsize
-        \\mbox{{{{\\color{{black}}\\footnotesize\\faMapMarker*}}\\hspace*{{0.13cm}}{_esc(info.location)}}}%
-        \\kern 0.25 cm%
-        \\AND%
-        \\kern 0.25 cm%
-        \\mbox{{\\hrefWithoutArrow{{mailto:{_esc(info.email)}}}{{\\color{{black}}{{\\footnotesize\\faEnvelope[regular]}}\\hspace*{{0.13cm}}{_esc(info.email)}}}}}%
-        \\kern 0.25 cm%
-        \\AND%
-        \\kern 0.25 cm%
-        \\mbox{{\\hrefWithoutArrow{{tel:{_esc(info.phone)}}}{{\\color{{black}}{{\\footnotesize\\faPhone*}}\\hspace*{{0.13cm}}{_esc(info.phone)}}}}}%{linkedin_part}
+        {contact_line}
     \\end{{header}}"""
 
 
@@ -85,7 +88,10 @@ def _experience_block(exp: Experience) -> str:
 
 
 def _project_block(proj: Project) -> str:
-    tech_str = ", ".join(_esc(t) for t in proj.technologies)
+    tech_line = ""
+    if proj.show_technologies and proj.technologies:
+        tech_str = ", ".join(_esc(t) for t in proj.technologies)
+        tech_line = f"\n        \\item \\textbf{{Technologies:}} {tech_str}"
     url_line = f"\n        \\item \\href{{{_esc(proj.url)}}}{{}}" if proj.url else ""
     return f"""\\begin{{twocolentry}}{{}}
     \\textbf{{{_esc(proj.name)}}}
@@ -94,8 +100,7 @@ def _project_block(proj: Project) -> str:
 \\vspace{{0.10cm}}
 \\begin{{onecolentry}}
     \\begin{{highlights}}
-        \\item {_esc(proj.description)}
-        \\item \\textbf{{Technologies :}} {tech_str}{url_line}
+        \\item {_esc(proj.description)}{tech_line}{url_line}
     \\end{{highlights}}
 \\end{{onecolentry}}
 """
@@ -110,18 +115,28 @@ def _tagged_line(items: list[TaggedItem]) -> str:
     return ", ".join(_esc(item.value) for item in items)
 
 
-def generate_latex(resume: ResumeResponse, personal_info: PersonalInfo | None = None) -> str:
-    info = personal_info or DEFAULT_PERSONAL_INFO
-    header = _header_block(info)
+def _skills_block(categories: list[SkillCategory]) -> str:
+    lines = [
+        f"""\\begin{{onecolentry}}
+    \\textbf{{{_esc(c.category)}:}} {_tagged_line(c.skills)}
+\\end{{onecolentry}}"""
+        for c in categories
+        if c.skills
+    ]
+    return "\n\n\\vspace{0.2 cm}\n\n".join(lines)
+
+
+def generate_latex(resume: ResumeResponse, personal_info: PersonalInfo) -> str:
+    header = _header_block(personal_info)
     education_blocks = "\n\\vspace{0.3cm}\n".join(_education_block(e) for e in resume.education)
     experience_blocks = "\n\\vspace{0.3cm}\n".join(_experience_block(e) for e in resume.experiences)
     project_blocks = "\n\\vspace{0.3cm}\n".join(_project_block(p) for p in resume.projects)
-    skills_line = _tagged_line(resume.skills)
+    skills_block = _skills_block(resume.skills)
     languages_line = _languages_line(resume.languages)
     interests_line = _tagged_line(resume.interests)
 
     return r"""\documentclass[10pt, letterpaper]{article}
-\usepackage{xcolor}
+\usepackage[dvipsnames]{xcolor}
 \definecolor{bleunuit}{RGB}{25, 25, 112}
 
 \usepackage{titlesec}
@@ -141,7 +156,6 @@ def generate_latex(resume: ResumeResponse, personal_info: PersonalInfo | None = 
 \usepackage{titlesec}
 \usepackage{tabularx}
 \usepackage{array}
-\usepackage[dvipsnames]{xcolor}
 \definecolor{primaryColor}{RGB}{0, 79, 144}
 \usepackage{enumitem}
 \usepackage{fontawesome5}
@@ -226,7 +240,7 @@ def generate_latex(resume: ResumeResponse, personal_info: PersonalInfo | None = 
 """ + f"""
 {header}
 
-\\vspace{{-0.6cm}}
+\\vspace{{0.2cm}}
 \\begin{{tcolorbox}}[
     colback=gray!5,
     colframe=bleunuit,
@@ -243,29 +257,27 @@ def generate_latex(resume: ResumeResponse, personal_info: PersonalInfo | None = 
 \\vspace{{-0.1cm}}
 
 
-\\section{{Formations}}
+\\section{{Education}}
 {education_blocks}
 
-\\section{{Expériences professionnelles}}
+\\section{{Professional Experience}}
 {experience_blocks}
 
-\\section{{Projets académiques}}
+\\section{{Projects}}
 {project_blocks}
 
-\\section{{Compétences techniques}}
-\\begin{{onecolentry}}
-    \\textbf{{Compétences :}} {skills_line}
-\\end{{onecolentry}}
+\\section{{Technical Skills}}
+{skills_block}
 
-\\section{{Langues et centres d'intérêt}}
+\\section{{Languages and Interests}}
 \\begin{{onecolentry}}
-    \\textbf{{Langues :}} {languages_line}
+    \\textbf{{Languages:}} {languages_line}
 \\end{{onecolentry}}
 
 \\vspace{{0.2 cm}}
 
 \\begin{{onecolentry}}
-    \\textbf{{Centres d'intérêt :}} {interests_line}
+    \\textbf{{Interests:}} {interests_line}
 \\end{{onecolentry}}
 
 \\end{{document}}

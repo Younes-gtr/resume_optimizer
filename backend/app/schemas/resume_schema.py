@@ -1,4 +1,6 @@
-from pydantic import BaseModel
+from typing import Any
+
+from pydantic import BaseModel, field_validator
 
 
 class ResumeRequest(BaseModel):
@@ -35,7 +37,13 @@ class Project(BaseModel):
     description: str
     technologies: list[str]
     url: str | None = None
+    show_technologies: bool = True
     required: bool = False
+
+
+class SkillCategory(BaseModel):
+    category: str
+    skills: list[TaggedItem]
 
 
 class Language(BaseModel):
@@ -44,22 +52,22 @@ class Language(BaseModel):
     required: bool = False
 
 
-class PersonalInfo(BaseModel):
-    full_name: str = "Prénom Nom"
-    email: str = "prenom.nom@email.com"
-    phone: str = "+33 6 00 00 00 00"
-    location: str = "Ville, Pays"
-    linkedin: str | None = None
-
-
 class ResumeResponse(BaseModel):
     summary: str
     education: list[Education]
     experiences: list[Experience]
     projects: list[Project]
-    skills: list[TaggedItem]
+    skills: list[SkillCategory]
     languages: list[Language]
     interests: list[TaggedItem]
+
+    @field_validator("skills", mode="before")
+    @classmethod
+    def _wrap_flat_skills(cls, value: Any) -> Any:
+        # Older cv.json files store skills as a flat list of TaggedItem: put them in a single category.
+        if isinstance(value, list) and value and all(isinstance(v, dict) and "value" in v for v in value):
+            return [{"category": "Skills", "skills": value}]
+        return value
 
 
 class AdaptRequest(BaseModel):

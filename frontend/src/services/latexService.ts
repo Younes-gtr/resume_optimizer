@@ -1,10 +1,11 @@
+import type { PersonalInfo } from "../types/personalInfo.types";
 import type { ResumeResponse } from "../types/resume.types";
 
-export async function generateLatex(resume: ResumeResponse): Promise<void> {
+export async function generateLatex(resume: ResumeResponse, personalInfo: PersonalInfo): Promise<void> {
   const res = await fetch("/api/v1/latex/generate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ resume }),
+    body: JSON.stringify({ resume, personal_info: personalInfo }),
   });
   if (!res.ok) {
     const error = await res.json().catch(() => ({ detail: res.statusText }));

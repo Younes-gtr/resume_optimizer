@@ -34,9 +34,9 @@ L'utilisateur soumet un CV en texte brut ou LaTeX. Le LLM extrait les informatio
     { "company": "string", "title": "string", "location": "string | null", "start_date": "string", "end_date": "string | null", "current": "boolean", "description": ["string"], "required": "boolean" }
   ],
   "projects": [
-    { "name": "string", "description": "string", "technologies": ["string"], "url": "string | null", "required": "boolean" }
+    { "name": "string", "description": "string", "technologies": ["string"], "url": "string | null", "show_technologies": "boolean", "required": "boolean" }
   ],
-  "skills": [{ "value": "string", "required": "boolean" }],
+  "skills": [{ "category": "string", "skills": [{ "value": "string", "required": "boolean" }] }],
   "languages": [{ "language": "string", "level": "string | null", "required": "boolean" }],
   "interests": [{ "value": "string", "required": "boolean" }]
 }
@@ -106,25 +106,41 @@ Sur l'écran de génération LaTeX, l'utilisateur choisit entre deux sources :
 
 ---
 
-## Feature 5 — Infos personnelles pour le header du CV LaTeX
+## Feature 5 — Infos personnelles séparées du CV (jamais envoyées au LLM) ✅
 
-Le header du `.tex` généré (nom, email, téléphone, ville, LinkedIn) est rempli depuis un **JSON d'infos personnelles**.
+Les infos personnelles (nom, email, téléphone, ville, LinkedIn) sont stockées dans un **JSON séparé** du JSON du CV. Elles ne servent qu'à remplir le header du `.tex` et ne transitent jamais par le LLM.
 
-### Pour l'instant : valeurs par défaut fixées dans le backend
+### Format `personal_info.json`
 
 ```json
 {
   "full_name": "Prénom Nom",
-  "email": "prenom.nom@email.com",
-  "phone": "+33 6 00 00 00 00",
-  "location": "Ville, Pays",
-  "linkedin": null
+  "email": "prenom.nom@email.com | null",
+  "phone": "+33 6 00 00 00 00 | null",
+  "location": "Ville, Pays | null",
+  "linkedin": "https://www.linkedin.com/in/... | null"
 }
 ```
 
-- **Backend** : objet `PersonalInfo` défini dans `latex_service.py` avec ces valeurs par défaut, injecté dans `generate_latex()`
-- **Schéma** `PersonalInfo` dans `resume_schema.py`
-- Sera rendu configurable dans une future feature (upload ou formulaire)
+Seul `full_name` est obligatoire ; les champs `null` sont omis du header.
+
+### Flux utilisateur
+Nouvelle étape `personal` entre l'adaptation (Feature 2/adapt) et l'écran final. L'utilisateur choisit :
+1. **Saisir ses informations** via un formulaire
+2. **Importer un JSON** — le formulaire est pré-rempli avec son contenu, l'utilisateur peut corriger avant de continuer
+
+Sur l'écran final, bouton **"Télécharger personal_info.json"** à côté de "Télécharger cv.json". Les infos sont conservées en mémoire après "Recommencer".
+
+### Backend
+- **Schéma** `PersonalInfo` dans `schemas/personal_info_schema.py` ; `LatexRequest` dans `schemas/latex_schema.py`
+- `POST /api/v1/latex/generate` : `personal_info` est **obligatoire** (plus de valeurs par défaut)
+- `latex_service._header_block()` n'affiche que les champs renseignés
+
+### Frontend
+- **Types** `types/personalInfo.types.ts`
+- **Page** `PersonalInfoStep.tsx` + **composant** `PersonalInfoForm.tsx`
+- **Page** `Done.tsx` (sortie de `App.tsx`)
+- **Utils** `utils/jsonFile.ts` (lecture/validation/téléchargement JSON génériques), `utils/personalInfoJson.ts`
 
 ---
 
@@ -139,3 +155,20 @@ Au démarrage, l'utilisateur choisit entre :
 - **Page `StartChoice.tsx`** : les deux choix + `<input type="file">` conditionnel
 - **Util `utils/resumeJson.ts`** : `validateResumeJson()` et `readResumeJsonFile()`, partagés avec l'écran final (4b)
 - `App.tsx` : nouvelle étape `start` (étape initiale, et cible du bouton "Recommencer")
+
+---
+
+## Feature 7 — CV LaTeX en anglais, compétences par catégorie, ligne Technologies optionnelle ✅
+
+### 7a — LaTeX en anglais
+Tous les titres et libellés du `.tex` sont en anglais (Education, Professional Experience, Projects, Technical Skills, Languages and Interests, "Present"). Le multilingue sera traité plus tard. L'UI reste en français.
+
+### 7b — Compétences par catégorie
+`skills` devient une liste de catégories : `{ "category": "Programming Languages", "skills": [TaggedItem] }`.
+- Le LLM regroupe les compétences en catégories (en anglais) lors du parsing ; l'adaptation garde les catégories telles quelles et n'omet une catégorie que si elle est vide
+- Éditeur : composant `SkillsSection.tsx` — ajouter / renommer / supprimer une catégorie, et gérer ses compétences (avec "Obligatoire")
+- LaTeX : une ligne `\textbf{Catégorie:} a, b, c` par catégorie non vide
+- Compatibilité : un ancien `cv.json` avec une liste plate est converti en une catégorie "Skills" (backend : validator Pydantic ; frontend : à l'import)
+
+### 7c — Ligne "Technologies" optionnelle par projet
+Champ `show_technologies: bool = True` sur chaque projet, case à cocher dans l'éditeur. Si décoché (ou liste vide), la ligne n'apparaît pas dans le `.tex` — utile pour faire tenir le CV sur une page.
