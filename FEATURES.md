@@ -187,7 +187,7 @@ Quand le CV a été adapté à une offre, l'écran final propose de générer un
 - L'utilisateur relit et **édite** la lettre avant export. Une vérification par agents viendra plus tard (cf. roadmap)
 
 ### Format (standard, en anglais)
-Infos personnelles en haut à gauche → date → destinataire / entreprise / lieu → `Subject: Application for <poste>` → `Dear <destinataire | Hiring Manager>,` → paragraphes → `Sincerely,` + nom.
+PDF : infos personnelles en haut à gauche, **entreprise / destinataire / lieu en haut à droite** (même hauteur), date alignée à droite en dessous → `Subject: Application for <poste>` → `Dear <destinataire | Hiring Manager>,` → paragraphes → `Sincerely,` + nom. Le texte brut garde un ordre linéaire (infos perso, date, entreprise) pour le copier-coller.
 
 ### Backend
 - **Schémas** `schemas/cover_letter_schema.py` : `CoverLetter`, `CoverLetterRequest`, `CoverLetterResponse` (`letter` + `warnings`), `CoverLetterPdfRequest`
