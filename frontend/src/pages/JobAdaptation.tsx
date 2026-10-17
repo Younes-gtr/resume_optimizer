@@ -4,7 +4,7 @@ import type { ResumeResponse } from "../types/resume.types";
 
 interface Props {
   resumeData: ResumeResponse;
-  onAdapted: (adapted: ResumeResponse) => void;
+  onAdapted: (adapted: ResumeResponse, jobOffer: string) => void;
   onSkip: () => void;
 }
 
@@ -22,7 +22,7 @@ export default function JobAdaptation({ resumeData, onAdapted, onSkip }: Props) 
     setError(null);
     try {
       const adapted = await adaptResume(resumeData, jobOffer.trim());
-      onAdapted(adapted);
+      onAdapted(adapted, jobOffer.trim());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {

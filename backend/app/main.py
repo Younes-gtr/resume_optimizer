@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import latex, llm, resume
+from app.routers import cover_letter, latex, llm, resume
 
 app = FastAPI(title="Resume Optimizer API")
 
@@ -15,3 +15,4 @@ app.add_middleware(
 app.include_router(llm.router)
 app.include_router(resume.router)
 app.include_router(latex.router)
+app.include_router(cover_letter.router)

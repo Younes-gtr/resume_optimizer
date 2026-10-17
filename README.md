@@ -7,6 +7,7 @@ Turn your CV into a structured, editable format and generate a LaTeX resume tail
 - **CV parsing** — paste your CV (plain text or LaTeX); an LLM extracts it into structured JSON (summary, education, experiences, projects, skills, languages, interests).
 - **Editable review** — correct, add or remove items per section, and mark items as *required* so they are never dropped.
 - **Job adaptation** — paste a job offer; the LLM keeps only the most relevant items. It is instructed to never invent content and to always keep required items.
+- **Cover letter** — when a job offer is given, generate an English cover letter built only from your CV and the offer; edit it, copy it as plain text or download it as a PDF.
 - **LaTeX export** — generate a `.tex` resume from a clean template, either from the current session or from a previously saved JSON.
 - **Separate personal info** — your name and contact details are kept in their own `personal_info.json`, used only for the resume header and never sent to the LLM.
 - **JSON export / import** — save your structured CV and personal info, and reuse them later without re-parsing.
@@ -21,6 +22,7 @@ React + Vite (localhost:5173) ──/api──▶ FastAPI (localhost:8000) ─�
 2. **Edit** — in the browser, nothing is stored server-side
 3. **Adapt** *(optional)* — `POST /api/v1/resume/adapt`
 4. **Export** — `POST /api/v1/latex/generate` returns `cv.tex`
+5. **Cover letter** *(optional)* — `POST /api/v1/cover-letter/generate`, then `POST /api/v1/cover-letter/pdf`
 
 There is no database: your data lives in the browser session and in the JSON files you choose to download.
 
@@ -31,7 +33,7 @@ There is no database: your data lives in the browser session and in the JSON fil
 | Backend  | Python 3.13, FastAPI, Pydantic / pydantic-settings, [uv](https://docs.astral.sh/uv/) |
 | Frontend | React 19, TypeScript (strict), Vite, npm |
 | LLM      | [Groq](https://console.groq.com/) — `llama-3.1-8b-instant` by default |
-| Output   | LaTeX (`CV_template.tex`) |
+| Output   | LaTeX (`CV_template.tex`) for the resume, PDF via [reportlab](https://www.reportlab.com/) for the cover letter |
 
 ## Getting started
 

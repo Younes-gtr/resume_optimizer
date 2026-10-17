@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import CoverLetterSection from "../components/CoverLetterSection";
 import { generateLatex } from "../services/latexService";
 import { downloadJson } from "../utils/jsonFile";
 import { readResumeJsonFile } from "../utils/resumeJson";
@@ -8,6 +9,7 @@ import type { ResumeResponse } from "../types/resume.types";
 interface Props {
   resumeData: ResumeResponse;
   personalInfo: PersonalInfo;
+  jobOffer: string | null;
   onRestart: () => void;
 }
 
@@ -23,7 +25,7 @@ function toggleStyle(active: boolean): React.CSSProperties {
   };
 }
 
-export default function Done({ resumeData, personalInfo, onRestart }: Props) {
+export default function Done({ resumeData, personalInfo, jobOffer, onRestart }: Props) {
   const [latexLoading, setLatexLoading] = useState(false);
   const [latexError, setLatexError] = useState<string | null>(null);
   const [useUpload, setUseUpload] = useState(false);
@@ -100,6 +102,8 @@ export default function Done({ resumeData, personalInfo, onRestart }: Props) {
 
         {latexError && <p style={{ color: "red", marginTop: 8 }}>Erreur : {latexError}</p>}
       </div>
+
+      {jobOffer && <CoverLetterSection resumeData={resumeData} jobOffer={jobOffer} personalInfo={personalInfo} />}
 
       <button onClick={onRestart} style={buttonStyle}>
         Recommencer

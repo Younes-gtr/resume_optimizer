@@ -64,20 +64,7 @@ If the CV already groups its skills, keep its categories."""
 
 def parse_resume(cv_text: str) -> ResumeResponse:
     prompt = f"{_SYSTEM_PROMPT}\n\nHere is the CV to parse:\n\n{cv_text}"
-    raw = llm_service.generate(prompt)
-
-    cleaned = raw.strip()
-    if cleaned.startswith("```"):
-        cleaned = cleaned.split("```")[1]
-        if cleaned.startswith("json"):
-            cleaned = cleaned[4:]
-        cleaned = cleaned.strip()
-
-    try:
-        data = json.loads(cleaned)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Le modèle n'a pas retourné un JSON valide : {e}") from e
-
+    data = llm_service.generate_json(prompt)
     return ResumeResponse.model_validate(data)
 
 
@@ -103,18 +90,5 @@ def adapt_resume(resume: ResumeResponse, job_offer: str) -> ResumeResponse:
         f"Input CV JSON:\n{resume_json}\n\n"
         f"Job offer:\n{job_offer}"
     )
-    raw = llm_service.generate(prompt)
-
-    cleaned = raw.strip()
-    if cleaned.startswith("```"):
-        cleaned = cleaned.split("```")[1]
-        if cleaned.startswith("json"):
-            cleaned = cleaned[4:]
-        cleaned = cleaned.strip()
-
-    try:
-        data = json.loads(cleaned)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Le modèle n'a pas retourné un JSON valide : {e}") from e
-
+    data = llm_service.generate_json(prompt)
     return ResumeResponse.model_validate(data)

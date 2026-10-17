@@ -172,3 +172,29 @@ Tous les titres et libellés du `.tex` sont en anglais (Education, Professional 
 
 ### 7c — Ligne "Technologies" optionnelle par projet
 Champ `show_technologies: bool = True` sur chaque projet, case à cocher dans l'éditeur. Si décoché (ou liste vide), la ligne n'apparaît pas dans le `.tex` — utile pour faire tenir le CV sur une page.
+
+---
+
+## Feature 8 — Lettre de motivation adaptée à l'offre (texte + PDF) ✅
+
+Quand le CV a été adapté à une offre, l'écran final propose de générer une **lettre de motivation en anglais**, affichable en texte brut (copiable) et téléchargeable en PDF.
+
+### Règles anti-hallucination
+- Le LLM ne reçoit que le **JSON du CV** et **l'offre** — jamais les infos personnelles. Il ne rédige que le contenu (entreprise, poste, destinataire, paragraphes) ; l'en-tête, la date, la formule d'appel, la signature sont ajoutés localement
+- Prompt strict : tout fait sur le candidat doit venir du CV, aucun chiffre / détail / qualificatif inventé, aucune compétence revendiquée parce que l'offre la demande ; température 0.2
+- Contrôle déterministe : chiffres absents du CV et de l'offre, crochets (placeholders) → avertissements affichés
+- L'utilisateur relit et **édite** la lettre avant export. Une vérification par agents viendra plus tard (cf. roadmap)
+
+### Format (standard, en anglais)
+Infos personnelles en haut à gauche → date → destinataire / entreprise / lieu → `Subject: Application for <poste>` → `Dear <destinataire | Hiring Manager>,` → paragraphes → `Sincerely,` + nom.
+
+### Backend
+- **Schémas** `schemas/cover_letter_schema.py` : `CoverLetter`, `CoverLetterRequest`, `CoverLetterResponse` (`letter` + `warnings`), `CoverLetterPdfRequest`
+- **Services** `cover_letter_service.py` (LLM + contrôles), `cover_letter_pdf_service.py` (PDF avec `reportlab`, sans dépendance LaTeX)
+- **Router** `routers/cover_letter.py` : `POST /api/v1/cover-letter/generate`, `POST /api/v1/cover-letter/pdf`
+- `llm_service.generate_json()` : parsing JSON de la réponse LLM, partagé avec `resume_service`
+
+### Frontend
+- **Composants** `CoverLetterSection.tsx` (génération, avertissements, aperçu, copie, PDF), `CoverLetterEditor.tsx` (champs + corps éditable)
+- **Service** `coverLetterService.ts`, **util** `coverLetterText.ts` (texte brut au même format que le PDF), **types** `coverLetter.types.ts`
+- `App.tsx` conserve l'offre d'emploi après l'adaptation (`null` si l'étape est passée)

@@ -15,6 +15,8 @@ export default function App() {
   const [resumeData, setResumeData] = useState<ResumeResponse | null>(null);
   // Kept across restarts so the form is pre-filled for the next CV.
   const [personalInfo, setPersonalInfo] = useState<PersonalInfo | null>(null);
+  // Set only when the CV was adapted to a job offer: enables the cover letter.
+  const [jobOffer, setJobOffer] = useState<string | null>(null);
 
   function handleParsed(data: ResumeResponse) {
     setResumeData(data);
@@ -26,8 +28,9 @@ export default function App() {
     setStep("adapt");
   }
 
-  function handleAdapted(data: ResumeResponse) {
+  function handleAdapted(data: ResumeResponse, offer: string) {
     setResumeData(data);
+    setJobOffer(offer);
     setStep("personal");
   }
 
@@ -53,7 +56,7 @@ export default function App() {
       <JobAdaptation
         resumeData={resumeData}
         onAdapted={handleAdapted}
-        onSkip={() => setStep("personal")}
+        onSkip={() => { setJobOffer(null); setStep("personal"); }}
       />
     );
   }
@@ -67,7 +70,8 @@ export default function App() {
       <Done
         resumeData={resumeData}
         personalInfo={personalInfo}
-        onRestart={() => { setResumeData(null); setStep("start"); }}
+        jobOffer={jobOffer}
+        onRestart={() => { setResumeData(null); setJobOffer(null); setStep("start"); }}
       />
     );
   }
