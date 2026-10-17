@@ -1,4 +1,5 @@
 import json
+from typing import Any
 
 from app.schemas.resume_schema import ResumeResponse
 from app.services import llm_service
@@ -80,15 +81,39 @@ STRICT RULES — you must follow all of them without exception:
 7. Preserve the "required" field value on every item exactly as it is in the input.
 8. The output JSON must use the exact same field names and structure as the input.
 9. "skills" is a list of categories. Inside each category, apply rules 3 and 4 to its skills. Never rename a category or move a skill to another one. Omit a category only if none of its skills are kept.
-10. Preserve the "show_technologies" field value on every project exactly as it is in the input."""
+10. Preserve the "show_technologies" field value on every project exactly as it is in the input.
+11. Always return all the top-level keys of the input ("summary", "education", "experiences", "projects", "skills", "languages", "interests"), even when you keep no item of a section: use an empty list [] in that case."""
+
+
+def _required_only(section: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    kept: list[dict[str, Any]] = []
+    for item in section:
+        if "skills" in item:  # skill category: keep it with its required skills only
+            skills = [s for s in item["skills"] if s["required"]]
+            if skills:
+                kept.append({**item, "skills": skills})
+        elif item.get("required"):
+            kept.append(item)
+    return kept
+
+
+def _restore_missing_sections(data: Any, original: dict[str, Any]) -> Any:
+    """The LLM sometimes drops a whole section when it keeps none of its items: restore its required items."""
+    if not isinstance(data, dict):
+        return data
+    for key, value in original.items():
+        if key not in data:
+            data[key] = _required_only(value) if isinstance(value, list) else value
+    return data
 
 
 def adapt_resume(resume: ResumeResponse, job_offer: str) -> ResumeResponse:
-    resume_json = json.dumps(resume.model_dump(), ensure_ascii=False, indent=2)
+    original = resume.model_dump()
+    resume_json = json.dumps(original, ensure_ascii=False, indent=2)
     prompt = (
         f"{_ADAPT_SYSTEM_PROMPT}\n\n"
         f"Input CV JSON:\n{resume_json}\n\n"
         f"Job offer:\n{job_offer}"
     )
-    data = llm_service.generate_json(prompt)
+    data = _restore_missing_sections(llm_service.generate_json(prompt), original)
     return ResumeResponse.model_validate(data)

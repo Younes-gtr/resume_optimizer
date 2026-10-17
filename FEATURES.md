@@ -181,7 +181,8 @@ Quand le CV a été adapté à une offre, l'écran final propose de générer un
 
 ### Règles anti-hallucination
 - Le LLM ne reçoit que le **JSON du CV** et **l'offre** — jamais les infos personnelles. Il ne rédige que le contenu (entreprise, poste, destinataire, paragraphes) ; l'en-tête, la date, la formule d'appel, la signature sont ajoutés localement
-- Prompt strict : tout fait sur le candidat doit venir du CV, aucun chiffre / détail / qualificatif inventé, aucune compétence revendiquée parce que l'offre la demande ; température 0.2
+- Prompt en 3 étapes : (1) **analyse de l'offre** (activité de l'entreprise, missions, exigences) et mise en correspondance avec des preuves du CV — champ `offer_analysis` du JSON, ignoré ensuite ; (2) rédaction en 4–6 paragraphes structurés (présentation + pourquoi l'entreprise, formation, expérience clé liée aux missions, projets/compétences, motivation, conclusion) ; (3) auto-relecture
+- Règles strictes : tout fait sur le candidat vient du CV ; aucun chiffre, détail, qualificatif ou niveau inventé ("strong", "robust", "demonstrates"…) ; aucune compétence revendiquée parce que l'offre la demande ; les affirmations sur l'offre doivent être vraies ; température 0.2
 - Contrôle déterministe : chiffres absents du CV et de l'offre, crochets (placeholders) → avertissements affichés
 - L'utilisateur relit et **édite** la lettre avant export. Une vérification par agents viendra plus tard (cf. roadmap)
 

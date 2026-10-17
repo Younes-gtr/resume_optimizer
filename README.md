@@ -32,7 +32,7 @@ There is no database: your data lives in the browser session and in the JSON fil
 |----------|-------|
 | Backend  | Python 3.13, FastAPI, Pydantic / pydantic-settings, [uv](https://docs.astral.sh/uv/) |
 | Frontend | React 19, TypeScript (strict), Vite, npm |
-| LLM      | [Groq](https://console.groq.com/) — `llama-3.1-8b-instant` by default |
+| LLM      | [Groq](https://console.groq.com/) — `openai/gpt-oss-120b` by default |
 | Output   | LaTeX (`CV_template.tex`) for the resume, PDF via [reportlab](https://www.reportlab.com/) for the cover letter |
 
 ## Getting started
@@ -70,7 +70,7 @@ Open http://localhost:5173.
 | Variable       | Description                  | Default                 |
 |----------------|------------------------------|-------------------------|
 | `GROQ_API_KEY` | Your Groq API key (required) | —                       |
-| `GROQ_MODEL`   | Groq model to use            | `llama-3.1-8b-instant`  |
+| `GROQ_MODEL`   | Groq model to use            | `openai/gpt-oss-120b`   |
 
 ## Project structure
 
