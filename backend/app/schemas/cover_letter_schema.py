@@ -24,6 +24,13 @@ class CoverLetterResponse(BaseModel):
     warnings: list[str]
 
 
+class CoverLetterRevisionRequest(BaseModel):
+    resume: ResumeResponse
+    job_offer: str
+    letter: CoverLetter
+    feedback: str
+
+
 class CoverLetterPdfRequest(BaseModel):
     letter: CoverLetter
     personal_info: PersonalInfo

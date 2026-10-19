@@ -1,11 +1,18 @@
 import { useState } from "react";
 import CoverLetterEditor from "./CoverLetterEditor";
+import CoverLetterFeedback from "./CoverLetterFeedback";
 import { btnStyle, inputStyle } from "./editorStyles";
-import { downloadCoverLetterPdf, generateCoverLetter } from "../services/coverLetterService";
+import { downloadCoverLetterPdf, generateCoverLetter, reviseCoverLetter } from "../services/coverLetterService";
 import { formatCoverLetterText, paragraphsToText, textToParagraphs } from "../utils/coverLetterText";
-import type { CoverLetter } from "../types/coverLetter.types";
+import type { CoverLetter, CoverLetterResponse } from "../types/coverLetter.types";
 import type { PersonalInfo } from "../types/personalInfo.types";
 import type { ResumeResponse } from "../types/resume.types";
+
+interface Snapshot {
+  letter: CoverLetter;
+  body: string;
+  warnings: string[];
+}
 
 interface Props {
   resumeData: ResumeResponse;
@@ -18,6 +25,9 @@ export default function CoverLetterSection({ resumeData, jobOffer, personalInfo 
   const [body, setBody] = useState("");
   const [warnings, setWarnings] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [revising, setRevising] = useState(false);
+  // Letter as it was before the last revision, to undo it.
+  const [previous, setPrevious] = useState<Snapshot | null>(null);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,19 +35,48 @@ export default function CoverLetterSection({ resumeData, jobOffer, personalInfo 
   const finalLetter: CoverLetter | null = letter && { ...letter, paragraphs: textToParagraphs(body) };
   const plainText = finalLetter ? formatCoverLetterText(finalLetter, personalInfo) : "";
 
+  function show(res: CoverLetterResponse) {
+    setLetter(res.letter);
+    setBody(paragraphsToText(res.letter.paragraphs));
+    setWarnings(res.warnings);
+  }
+
   async function handleGenerate() {
     setLoading(true);
     setError(null);
     try {
-      const res = await generateCoverLetter(resumeData, jobOffer);
-      setLetter(res.letter);
-      setBody(paragraphsToText(res.letter.paragraphs));
-      setWarnings(res.warnings);
+      show(await generateCoverLetter(resumeData, jobOffer));
+      setPrevious(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erreur inconnue");
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleRevise(feedback: string): Promise<boolean> {
+    if (!letter || !finalLetter) return false;
+    setRevising(true);
+    setError(null);
+    try {
+      const res = await reviseCoverLetter(resumeData, jobOffer, finalLetter, feedback);
+      setPrevious({ letter, body, warnings });
+      show(res);
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erreur inconnue");
+      return false;
+    } finally {
+      setRevising(false);
+    }
+  }
+
+  function handleUndo() {
+    if (!previous) return;
+    setLetter(previous.letter);
+    setBody(previous.body);
+    setWarnings(previous.warnings);
+    setPrevious(null);
   }
 
   async function handleCopy() {
@@ -65,7 +104,7 @@ export default function CoverLetterSection({ resumeData, jobOffer, personalInfo 
       <p style={{ color: "#555", fontSize: 13 }}>
         Générée en anglais à partir du CV et de l'offre uniquement. Vos informations personnelles ne sont pas envoyées au LLM.
       </p>
-      <button onClick={handleGenerate} disabled={loading} style={{ ...btnStyle("#1976d2"), padding: "8px 20px", fontSize: 14 }}>
+      <button onClick={handleGenerate} disabled={loading || revising} style={{ ...btnStyle("#1976d2"), padding: "8px 20px", fontSize: 14 }}>
         {loading ? "Génération..." : letter ? "Régénérer la lettre" : "Générer la lettre de motivation"}
       </button>
 
@@ -79,6 +118,7 @@ export default function CoverLetterSection({ resumeData, jobOffer, personalInfo 
           ))}
 
           <CoverLetterEditor letter={letter} body={body} onLetterChange={setLetter} onBodyChange={setBody} />
+          <CoverLetterFeedback loading={revising} canUndo={previous !== null} onSubmit={handleRevise} onUndo={handleUndo} />
 
           <h3 style={{ fontSize: 14, margin: "16px 0 4px" }}>Aperçu (texte brut)</h3>
           <textarea readOnly rows={14} value={plainText} style={{ ...inputStyle, background: "#f5f5f5", resize: "vertical" }} />

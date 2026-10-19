@@ -20,6 +20,13 @@ export interface CoverLetterResponse {
   warnings: string[];
 }
 
+export interface CoverLetterRevisionRequest {
+  resume: ResumeResponse;
+  job_offer: string;
+  letter: CoverLetter;
+  feedback: string;
+}
+
 export interface CoverLetterPdfRequest {
   letter: CoverLetter;
   personal_info: PersonalInfo;

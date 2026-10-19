@@ -1,4 +1,10 @@
-import type { CoverLetter, CoverLetterPdfRequest, CoverLetterRequest, CoverLetterResponse } from "../types/coverLetter.types";
+import type {
+  CoverLetter,
+  CoverLetterPdfRequest,
+  CoverLetterRequest,
+  CoverLetterResponse,
+  CoverLetterRevisionRequest,
+} from "../types/coverLetter.types";
 import type { PersonalInfo } from "../types/personalInfo.types";
 import type { ResumeResponse } from "../types/resume.types";
 
@@ -19,6 +25,17 @@ async function postJson(url: string, body: unknown): Promise<Response> {
 export async function generateCoverLetter(resume: ResumeResponse, jobOffer: string): Promise<CoverLetterResponse> {
   const body: CoverLetterRequest = { resume, job_offer: jobOffer };
   const res = await postJson("/api/v1/cover-letter/generate", body);
+  return res.json() as Promise<CoverLetterResponse>;
+}
+
+export async function reviseCoverLetter(
+  resume: ResumeResponse,
+  jobOffer: string,
+  letter: CoverLetter,
+  feedback: string,
+): Promise<CoverLetterResponse> {
+  const body: CoverLetterRevisionRequest = { resume, job_offer: jobOffer, letter, feedback };
+  const res = await postJson("/api/v1/cover-letter/revise", body);
   return res.json() as Promise<CoverLetterResponse>;
 }
 

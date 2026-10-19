@@ -185,6 +185,12 @@ Quand le CV a été adapté à une offre, l'écran final propose de générer un
 - Règles strictes : tout fait sur le candidat vient du CV ; aucun chiffre, détail, qualificatif ou niveau inventé ("strong", "robust", "demonstrates"…) ; aucune compétence revendiquée parce que l'offre la demande ; les affirmations sur l'offre doivent être vraies ; température 0.2
 - Contrôle déterministe : chiffres absents du CV et de l'offre, crochets (placeholders) → avertissements affichés
 - L'utilisateur relit et **édite** la lettre avant export. Une vérification par agents viendra plus tard (cf. roadmap)
+- **Temps des diplômes** : le backend calcule pour chaque formation un `status` (`completed` / `in progress` / `unknown`) à partir de `end_date` et de la date du jour (formats "2025", "Sep 2025", "09/2025", "juin 2025", "Present"…), et le prompt reçoit la date du jour. Diplôme terminé → passé ("I graduated from…"), en cours → présent, inconnu → formulation neutre. Ce statut prime sur le résumé du CV
+
+### Révision par remarques
+Sous l'éditeur, l'utilisateur peut écrire des remarques ("J'ai déjà mon diplôme", "raccourcis la conclusion"…) et cliquer sur **"Appliquer les remarques"** : le LLM reçoit la lettre **actuelle** (y compris les modifications manuelles) et ne change que ce qui est demandé. Les faits donnés par l'utilisateur dans ses remarques sont considérés comme des sources fiables ; toutes les autres règles anti-hallucination s'appliquent. Bouton **"Annuler la dernière révision"**.
+- `POST /api/v1/cover-letter/revise` — Body `{ resume, job_offer, letter, feedback }`, Response `CoverLetterResponse`
+- Composant `CoverLetterFeedback.tsx`
 
 ### Format (standard, en anglais)
 PDF : infos personnelles en haut à gauche, **entreprise / destinataire / lieu en haut à droite** (même hauteur), date alignée à droite en dessous → `Subject: Application for <poste>` → `Dear <destinataire | Hiring Manager>,` → paragraphes → `Sincerely,` + nom. Le texte brut garde un ordre linéaire (infos perso, date, entreprise) pour le copier-coller.
