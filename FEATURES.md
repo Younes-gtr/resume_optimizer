@@ -205,3 +205,24 @@ PDF : infos personnelles en haut à gauche, **entreprise / destinataire / lieu e
 - **Composants** `CoverLetterSection.tsx` (génération, avertissements, aperçu, copie, PDF), `CoverLetterEditor.tsx` (champs + corps éditable)
 - **Service** `coverLetterService.ts`, **util** `coverLetterText.ts` (texte brut au même format que le PDF), **types** `coverLetter.types.ts`
 - `App.tsx` conserve l'offre d'emploi après l'adaptation (`null` si l'étape est passée)
+
+---
+
+## Feature 9 — Agent d'extraction de l'offre (LangGraph) ✅
+
+Premier agent de l'app. Sur l'écran d'adaptation, l'utilisateur colle le **texte** ou l'**URL** de l'offre et clique sur **"Analyser l'offre"** : l'agent récupère la page si besoin (outil `scrap_site`) et renvoie uniquement l'offre, nettoyée (sans menus, cookies, pieds de page, autres offres). Le texte extrait remplace le contenu de la zone de saisie ; l'utilisateur le vérifie / corrige (lien "Revenir au texte d'origine"), puis "Adapter le CV".
+
+C'est **ce texte final** qui est utilisé pour l'adaptation du CV **et** pour la lettre de motivation (`jobOffer` dans `App.tsx`) : l'agent ne tourne qu'une fois. "Adapter le CV" fonctionne aussi sans passer par l'agent (texte déjà propre) ; une URL seule est refusée tant qu'elle n'a pas été analysée.
+
+### Backend
+- `app/agents/` : `graph.py` (boucle LLM ↔ outils), `tools.py` (`scrap_site` : timeout 10 s, texte tronqué à 15 000 caractères), `prompts.py`, `state.py`, `llm.py` (`ChatGroq` configuré via `get_settings()`)
+- **Service** `job_offer_service.py` : `extract_job_offer()` (limite de récursion 8 ; `NO_JOB_OFFER_FOUND` → erreur 422)
+- **Router** `POST /api/v1/job-offer/extract` — Body `{ job_offer }` (texte ou URL), Response `{ job_offer }`
+- Dépendances : `langgraph`, `langchain`, `langchain-groq`, `requests`, `beautifulsoup4` (le SDK `groq` est en 0.x, requis par `langchain-groq`)
+
+### Frontend
+- **Service** `jobOfferService.ts`, **types** `jobOffer.types.ts`
+- `JobAdaptation.tsx` : bouton "Analyser l'offre", bandeau de vérification, restauration du texte d'origine
+
+### Limites
+Certains sites (LinkedIn notamment) bloquent le scraping ou chargent l'offre en JavaScript : coller le texte reste la solution de repli.

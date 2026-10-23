@@ -3,13 +3,13 @@ from langchain.messages import ToolMessage
 from app.agents.prompts import AGENT_PROMPT
 from app.agents.tools import model_with_tools, tools_by_name
 from app.agents.state import MessagesState
-from typing import Literal
+from typing import Any, Literal
 from langgraph.graph import StateGraph, START, END
 
 
 
 # llm_call node
-def llm_call(state: dict):
+def llm_call(state: MessagesState) -> dict[str, Any]:
     """LLM decides whether to call a tool or not"""
 
     return {
@@ -30,7 +30,7 @@ def llm_call(state: dict):
 
 
 # tool node
-def tool_node(state: dict):
+def tool_node(state: MessagesState) -> dict[str, Any]:
     """Performs the tool call"""
 
     result = []
