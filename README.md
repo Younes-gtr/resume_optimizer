@@ -93,6 +93,7 @@ frontend/src/
 ## Roadmap
 
 - [ ] Agent-based pipeline (e.g. LangGraph): an experience-selection agent followed by a hallucination-check agent that verifies every output item exists in the source CV
+- [ ] Add different CV templates
 - [ ] Support for other LLM providers and local models
 - [ ] PDF compilation directly from the app
 
