@@ -53,7 +53,7 @@ L'utilisateur soumet un CV en texte brut ou LaTeX. Le LLM extrait les informatio
 
 ### Backend
 - **Schemas** : chaque modèle (Education, Experience, Project, Language) a un champ `required: bool = False`. Pour les listes de strings, un modèle `TaggedItem(value: str, required: bool)` remplace `str`
-- **Service** `resume_service.py` : prompt + **structured output strict** (`llm_service.generate_structured()` : le schéma JSON de `ResumeResponse` est imposé au modèle par l'API Groq, `json_schema` + `strict: true`) + validation Pydantic. Utilisé aussi par l'adaptation : toutes les sections sont toujours présentes (liste vide si aucun élément gardé). Le schéma garantit la structure, pas la fidélité du contenu
+- **Service** `resume_service.py` : prompt + **structured output strict** (`llm_service.generate_structured()` : le schéma JSON de `ResumeResponse` est envoyé à l'API Groq, `json_schema` + `strict: true`). Groq **vérifie** la réponse après génération et la rejette (400 `json_validate_failed`) si elle ne respecte pas le schéma : la réponse rejetée (`failed_generation`) est alors réparée si possible (objets écrits sous forme de chaîne JSON), sinon l'appel est relancé une fois + validation Pydantic. Utilisé aussi par l'adaptation : toutes les sections sont toujours présentes (liste vide si aucun élément gardé). Le schéma garantit la structure, pas la fidélité du contenu
 - **Router** `POST /api/v1/resume/parse`
 
 ### Frontend
