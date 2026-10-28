@@ -64,7 +64,8 @@ If the CV already groups its skills, keep its categories."""
 
 def parse_resume(cv_text: str) -> ResumeResponse:
     prompt = f"{_SYSTEM_PROMPT}\n\nHere is the CV to parse:\n\n{cv_text}"
-    return llm_service.generate_structured(prompt, ResumeResponse)
+    # Extraction is mechanical: low reasoning halves the tokens and the time, with the same result.
+    return llm_service.generate_structured(prompt, ResumeResponse, reasoning_effort="low")
 
 
 _ADAPT_SYSTEM_PROMPT = """You are a CV adapter. Your task is to filter and adapt a structured CV JSON to make it relevant for a specific job offer.
@@ -90,4 +91,4 @@ def adapt_resume(resume: ResumeResponse, job_offer: str) -> ResumeResponse:
         f"Job offer:\n{job_offer}"
     )
     # Strict structured output: every section is always present, even when no item of it is kept.
-    return llm_service.generate_structured(prompt, ResumeResponse)
+    return llm_service.generate_structured(prompt, ResumeResponse, reasoning_effort="low")

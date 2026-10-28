@@ -179,7 +179,8 @@ def generate_cover_letter(resume: ResumeResponse, job_offer: str) -> CoverLetter
     resume_json = _resume_json(resume, today)
     prompt = f"{_GENERATION_PROMPT}\n\n{_today_line(today)}\n\nCV JSON:\n{resume_json}\n\nJob offer:\n{job_offer}"
     # Low temperature: we want a faithful letter, not a creative one.
-    letter = CoverLetter.model_validate(llm_service.generate_json(prompt, temperature=0.2))
+    # A letter uses ~1,500 output tokens including reasoning: 3,000 leaves room without over-reserving the rate limit.
+    letter = CoverLetter.model_validate(llm_service.generate_json(prompt, temperature=0.2, max_tokens=3000))
     return CoverLetterResponse(letter=letter, warnings=_check_letter(letter, resume_json + "\n" + job_offer))
 
 
@@ -193,7 +194,7 @@ def revise_cover_letter(
         f"{_REVISION_PROMPT}\n\n{_today_line(today)}\n\nCV JSON:\n{resume_json}\n\nJob offer:\n{job_offer}"
         f"\n\nCurrent letter:\n{letter_json}\n\nCandidate's feedback:\n{feedback}"
     )
-    revised = CoverLetter.model_validate(llm_service.generate_json(prompt, temperature=0.2))
+    revised = CoverLetter.model_validate(llm_service.generate_json(prompt, temperature=0.2, max_tokens=3000))
     # Facts given in the feedback (or already in the edited letter) are legitimate sources too.
     source_text = "\n".join([resume_json, job_offer, feedback, letter_json])
     return CoverLetterResponse(letter=revised, warnings=_check_letter(revised, source_text))

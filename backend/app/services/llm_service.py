@@ -1,31 +1,63 @@
 import json
-from typing import Any, TypeVar
+from typing import Any, Literal, TypeVar
 
-from groq import BadRequestError, Groq
+from groq import BadRequestError, Groq, RateLimitError
 from pydantic import BaseModel, ValidationError
 
 from app.config import get_settings
 
 
 T = TypeVar("T", bound=BaseModel)
+ReasoningEffort = Literal["low", "medium", "high"]
 
 
-def generate(prompt: str, temperature: float | None = None, response_format: dict[str, Any] | None = None) -> str:
+def supports_reasoning_effort(model: str) -> bool:
+    return model.startswith("openai/gpt-oss")
+
+
+def generate(
+    prompt: str,
+    temperature: float | None = None,
+    response_format: dict[str, Any] | None = None,
+    max_tokens: int = 4096,
+    reasoning_effort: ReasoningEffort | None = None,
+) -> str:
+    """Calls the LLM.
+
+    Groq rate-limits per minute on prompt tokens + `max_tokens` (reserved in full, even if unused), and the
+    reasoning of gpt-oss models counts as output: keep `max_tokens` close to the need and use a low
+    `reasoning_effort` for mechanical tasks, otherwise calls are queued behind the limit.
+    """
     settings = get_settings()
     client = Groq(api_key=settings.groq_api_key)
-    result = client.chat.completions.create(
-        model=settings.groq_model,
-        messages=[{"role": "user", "content": prompt}],
-        max_tokens=4096,
-        temperature=temperature,
-        response_format=response_format,
-    )
+    extra: dict[str, Any] = {}
+    if reasoning_effort and supports_reasoning_effort(settings.groq_model):
+        extra["reasoning_effort"] = reasoning_effort
+    try:
+        result = client.chat.completions.create(
+            model=settings.groq_model,
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=max_tokens,
+            temperature=temperature,
+            response_format=response_format,
+            **extra,
+        )
+    except RateLimitError as e:
+        retry_after = e.response.headers.get("retry-after", "?")
+        raise RuntimeError(
+            f"Limite de l'API Groq atteinte (tokens par minute). Réessayez dans {retry_after} s."
+        ) from e
     return result.choices[0].message.content
 
 
-def generate_json(prompt: str, temperature: float | None = None) -> Any:
+def generate_json(
+    prompt: str,
+    temperature: float | None = None,
+    max_tokens: int = 4096,
+    reasoning_effort: ReasoningEffort | None = None,
+) -> Any:
     """Calls the LLM and parses its answer as JSON, tolerating a surrounding ```json code block."""
-    cleaned = generate(prompt, temperature).strip()
+    cleaned = generate(prompt, temperature, max_tokens=max_tokens, reasoning_effort=reasoning_effort).strip()
     if cleaned.startswith("```"):
         cleaned = cleaned.split("```")[1]
         if cleaned.startswith("json"):
@@ -84,7 +116,14 @@ def _unstringify_objects(node: Any) -> Any:
     return node
 
 
-def generate_structured(prompt: str, schema: type[T], temperature: float | None = None, attempts: int = 2) -> T:
+def generate_structured(
+    prompt: str,
+    schema: type[T],
+    temperature: float | None = None,
+    attempts: int = 2,
+    max_tokens: int = 4096,
+    reasoning_effort: ReasoningEffort | None = None,
+) -> T:
     """Calls the LLM with a strict JSON schema and returns the answer validated by `schema`.
 
     Groq checks the answer against the schema after generation and rejects it if it does not match: the rejected
@@ -98,7 +137,7 @@ def generate_structured(prompt: str, schema: type[T], temperature: float | None 
     last_error: Exception | None = None
     for _ in range(attempts):
         try:
-            raw = generate(prompt, temperature, response_format)
+            raw = generate(prompt, temperature, response_format, max_tokens, reasoning_effort)
         except BadRequestError as e:
             failed = _failed_generation(e)
             if failed is None:

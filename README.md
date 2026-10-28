@@ -74,6 +74,8 @@ Open http://localhost:5173.
 | `GROQ_API_KEY` | Your Groq API key (required) | —                       |
 | `GROQ_MODEL`   | Groq model to use            | `openai/gpt-oss-120b`   |
 
+> **Groq free tier:** requests are limited to 8,000 tokens per minute, counting the prompt plus the *maximum* output requested. The app keeps each call small (task-specific `max_tokens`, low reasoning effort for extraction tasks), but generating several letters in a row can still hit the limit: the Groq client then waits and retries automatically. A paid Groq tier removes this bottleneck.
+
 ## Project structure
 
 ```
